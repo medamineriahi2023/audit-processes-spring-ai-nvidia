@@ -2,9 +2,11 @@ package com.amaris.auditspringaiollama.service;
 
 import com.amaris.auditspringaiollama.models.ActivityInfo;
 import com.amaris.auditspringaiollama.models.EventInfo;
+import com.amaris.auditspringaiollama.models.output.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.model.bpmn.Bpmn;
+import org.camunda.bpm.model.bpmn.BpmnModelException;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,18 +35,38 @@ public class AuditService {
     private static final String ANSI_CYAN = "\u001B[36m";
     private static final String ANSI_WHITE = "\u001B[37m";
 
+    public Boolean isValidBpmnFile(MultipartFile file) {
+        log.info(ANSI_RED + "Vérification du fichier BPMN..." + ANSI_RESET);
+        if (file.isEmpty()) {
+            log.error(ANSI_RED + "Le fichier ne peut pas être vide" + ANSI_RESET);
+            return false;
+        }
+        String filename = file.getOriginalFilename();
+        if (filename == null || !filename.toLowerCase().endsWith(".bpmn")) {
+            log.error(ANSI_RED + "Le fichier doit avoir l'extension .bpmn" + ANSI_RESET);
+            return false;
+        }
+        try (InputStream inputStream = file.getInputStream()) {
+            BpmnModelInstance modelInstance = Bpmn.readModelFromStream(inputStream);
+            return true;
+        } catch (Exception e) {
+           return false;
+        }
+
+    }
+
     // nchoufou ken les activités fi BPMN file yabdew b verb à l'infinitif ou non
-    public Map<String,String> checkActivitiesIsVerbInfinitiveUsingAI(MultipartFile file) throws IOException {
+    public List<Response> checkActivitiesIsVerbInfinitiveUsingAI(MultipartFile file) throws IOException {
         logStage1("********************* Stage 1 *********************");
         logStage1("(UTILISANT L'AI) ==>Voir si les activités dans le fichier BPMN sont des verbes à l'infinitif ou non");
         logStage1("***************************************************");
-
+        List<Response> responses = new ArrayList<>();
         List<ActivityInfo> activities;
         try (InputStream inputStream = file.getInputStream()) {
             BpmnModelInstance modelInstance = Bpmn.readModelFromStream(inputStream);
             activities = bpmnFactory.extractActivities(modelInstance);
         } catch (Exception e) {
-            throw new IOException("Erreur lors de la lecture du fichier BPMN: " + e.getMessage(), e);
+            throw new BpmnModelException("Erreur lors de la lecture du fichier BPMN: " + e.getMessage(), e);
         }
 
         for( ActivityInfo activity : activities) {
@@ -53,16 +77,18 @@ public class AuditService {
                 logStage1("Aucune réponse reçue pour l'activité: " + activity.getName());
                 continue;
             }
+            responses.add(new Response("Réponse de l'IA pour l'activité '" + activity.getName(), transformResponse(response)));
             logStage1("Réponse de l'IA pour l'activité '" + activity.getName() + "': " + transformResponse(response));
         }
 
-        return null;
+        return responses;
     }
 
-    public Map<String,String> checkEventsAreInThePastForm(MultipartFile file) throws IOException {
+    public List<Response> checkEventsAreInThePastForm(MultipartFile file) throws IOException {
         logStage2("********************* Stage 2 *********************");
         logStage2("(UTILISANT L'AI) ==> Voir si les événements dans le fichier BPMN sont au passé ou non");
         logStage2("***************************************************");
+        List<Response> responses = new ArrayList<>();
 
         List<EventInfo> events;
         try (InputStream inputStream = file.getInputStream()) {
@@ -78,19 +104,21 @@ public class AuditService {
             String message = "Réponds uniquement par 1 ou 0 sans explication. Est-ce que le mot \"" + lastWord + "\" est (un verbe dans le passé) ? Réponds 1 pour oui, 0 pour non.";
             String response = this.chatModel.call(message);
             if (response == null || response.isEmpty()) {
-                logStage2("Aucune réponse reçue pour l'activité: " + eventInfo.getName());
+                logStage2("Aucune réponse reçue pour l'événement: " + eventInfo.getName());
                 continue;
             }
-            logStage2("Réponse de l'IA pour l'activité '" + eventInfo.getName() + "': " + transformResponse(response));
+            responses.add(new Response("Réponse de l'IA pour l'événement '" + eventInfo.getName(), transformResponse(response)));
+            logStage2("Réponse de l'IA pour l'événement '" + eventInfo.getName() + "': " + transformResponse(response));
         }
 
-        return null;
+        return responses;
     }
 
-    public void detectAbbreviations(MultipartFile file) throws IOException {
+    public List<Response> detectAbbreviations(MultipartFile file) throws IOException {
         logStage3("********************** Stage 3 *********************");
         logStage3("(UTILISANT L'AI) ==> Vérifier les abréviations dans le fichier BPMN");
         logStage3("*****************************************************");
+        List<Response> responses = new ArrayList<>();
 
         List<EventInfo> events;
         try (InputStream inputStream = file.getInputStream()) {
@@ -107,42 +135,52 @@ public class AuditService {
                 logStage3("Aucune réponse reçue pour l'activité: " + eventInfo.getName());
                 continue;
             }
+            responses.add(new Response("Réponse de l'IA pour l'activité '" + eventInfo.getName(), transformResponse(response)));
+
             logStage3("Réponse de l'IA pour l'activité '" + eventInfo.getName() + "': " + transformResponse(response));
         }
+        return responses;
     }
 
-    public void checkTheNumberOfStartEvents(MultipartFile file) throws IOException {
+    public Map<String, String> checkTheNumberOfStartEvents(MultipartFile file) throws IOException {
         logStage4("********************** Stage 4 *********************");
         logStage4("(UTILISANT LE CODE NATIF) ==> Vérifier le nombre d'événements de début dans le fichier BPMN");
         logStage4("*****************************************************");
-
+        Map<String, String> result = new HashMap<>();
         try(InputStream inputStream = file.getInputStream()) {
             BpmnModelInstance bpmnModelInstance = Bpmn.readModelFromStream(inputStream);
             long startEventCount = bpmnModelInstance.getModelElementsByType(org.camunda.bpm.model.bpmn.instance.StartEvent.class).size();
             if (startEventCount == 0) {
                 logStage4("Aucun événement de début trouvé dans le fichier BPMN. => " + transformResponse("0"));
+                result.put("Aucun événement de début trouvé", transformResponse("0"));
             } else if (startEventCount > 1) {
                 logStage4("Plus d'un événement de début trouvé dans le fichier BPMN. Nombre d'événements de début: " + startEventCount +" => " + transformResponse("0"));
+                result.put("Plus d'un événement de début trouvé", transformResponse("0"));
             } else {
                 logStage4("Un seul événement de début trouvé dans le fichier BPMN." + transformResponse("1"));
+                result.put("Un seul événement de début trouvé", transformResponse("1"));
             }
         }
+        return result;
     }
 
-    public void checkTheNumberOfEndEvents(MultipartFile file) throws IOException {
+    public Map<String, String> checkTheNumberOfEndEvents(MultipartFile file) throws IOException {
         logStage5("********************** Stage 5 *********************");
         logStage5("(UTILISANT LE CODE NATIF) ==> Vérifier le nombre d'événements de fin dans le fichier BPMN");
         logStage5("*****************************************************");
-
+        Map<String, String> result = new HashMap<>();
         try(InputStream inputStream = file.getInputStream()) {
             BpmnModelInstance bpmnModelInstance = Bpmn.readModelFromStream(inputStream);
             long endEventsCount = bpmnModelInstance.getModelElementsByType(org.camunda.bpm.model.bpmn.instance.EndEvent.class).size();
             if (endEventsCount == 0) {
                 logStage5("Aucun événement de fin trouvé dans le fichier BPMN.: " + transformResponse("0"));
+                result.put("Aucun événement de fin trouvé", transformResponse("0"));
             } else if (endEventsCount > 0) {
                 logStage5("Plus d'un événement de fin trouvé dans le fichier BPMN. Nombre d'événements de fin: " + endEventsCount + " => " + transformResponse("1"));
+                result.put("Plus d'un événement de fin trouvé", transformResponse("1"));
             }
         }
+        return result;
     }
 
     // Colored logging methods for each stage
