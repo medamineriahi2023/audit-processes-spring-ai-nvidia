@@ -29,3 +29,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Configuration sécurisée ###
+# Fichier contenant les prompts - ne pas versionner pour des raisons de sécurité
+src/main/resources/prompts.properties

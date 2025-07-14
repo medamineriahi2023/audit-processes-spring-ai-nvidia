@@ -5,6 +5,7 @@ import com.amaris.auditspringaiollama.models.EventInfoDto;
 import com.amaris.auditspringaiollama.models.output.Response;
 import com.amaris.auditspringaiollama.service.IAuditService;
 import com.amaris.auditspringaiollama.service.IbpmnFactory;
+import com.amaris.auditspringaiollama.configuration.PromptConfiguration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.model.bpmn.Bpmn;
@@ -32,6 +33,7 @@ import java.util.Map;
 public class AuditService implements IAuditService {
     private final OpenAiChatModel chatModel;
     private final IbpmnFactory bpmnFactory;
+    private final PromptConfiguration promptConfiguration;
 
     // Chemin vers le dossier contenant les fichiers BPMN
     private static final String BPMN_FILES_PATH = "src/main/resources/bpmn/";
@@ -66,7 +68,7 @@ public class AuditService implements IAuditService {
     }
 
     // nchoufou ken les activités fi BPMN file yabdew b verb à l'infinitif ou non
-    public List<Response> checkActivitiesIsVerbInfinitiveUsingAI(MultipartFile file) {
+    public List<Response>checkActivitiesIsVerbInfinitiveUsingAI(MultipartFile file) {
         logStage1("********************* Stage 1 *********************");
         logStage1("(UTILISANT L'AI) ==>Voir si les activités dans le fichier BPMN sont des verbes à l'infinitif ou non");
         logStage1("***************************************************");
@@ -81,7 +83,7 @@ public class AuditService implements IAuditService {
 
         for( ActivityInfoDto activity : activities) {
             String word = activity.getName().trim().split(" ")[0];
-            String message = "Réponds uniquement par 1 ou 0 sans explication. Est-ce que le mot \"" + word + "\" est (un verbe et à l'infinitif)? Réponds 1 pour oui, 0 pour non.";
+            String message = promptConfiguration.getInfinitiveVerbPrompt(word);
             String response = this.chatModel.call(message);
             if (response == null || response.isEmpty()) {
                 logStage1("Aucune réponse reçue pour l'activité: " + activity.getName());
@@ -111,7 +113,7 @@ public class AuditService implements IAuditService {
         for( EventInfoDto eventInfoDto : events) {
             String[] words = eventInfoDto.getName().trim().split(" ");
             String lastWord = words[words.length - 1];
-            String message = "Réponds uniquement par 1 ou 0 sans explication. Est-ce que le mot \"" + lastWord + "\" est (un verbe dans le passé) ? Réponds 1 pour oui, 0 pour non.";
+            String message = promptConfiguration.getPastTenseWordPrompt(lastWord);
             String response = this.chatModel.call(message);
             if (response == null || response.isEmpty()) {
                 logStage2("Aucune réponse reçue pour l'événement: " + eventInfoDto.getName());
@@ -138,7 +140,7 @@ public class AuditService implements IAuditService {
         }
 
         for( EventInfoDto eventInfoDto : events) {
-            String message = "Réponds uniquement par 0 ou 1, sans aucune explication. Analyse le texte suivant : \"" + eventInfoDto.getName() + "\". Si le texte contient une ou plusieurs abréviations (ex. sigles, acronymes, ou mots tronqués utilisés de manière abrégée), réponds 0. Sinon, réponds 1.";
+            String message = promptConfiguration.getAbbreviationDetectionPrompt(eventInfoDto.getName());
             String response = this.chatModel.call(message);
             if (response == null || response.isEmpty()) {
                 logStage3("Aucune réponse reçue pour l'activité: " + eventInfoDto.getName());
@@ -262,7 +264,7 @@ public class AuditService implements IAuditService {
 
         for (ActivityInfoDto activity : activities) {
             String word = activity.getName().trim().split(" ")[0];
-            String message = "Réponds uniquement par 1 ou 0 sans explication. Est-ce que le mot \"" + word + "\" est (un verbe et à l'infinitif)? Réponds 1 pour oui, 0 pour non.";
+            String message = promptConfiguration.getInfinitiveVerbPrompt(word);
             String response = this.chatModel.call(message);
             if (response == null || response.isEmpty()) {
                 logStage1("Aucune réponse reçue pour l'activité: " + activity.getName());
@@ -288,7 +290,7 @@ public class AuditService implements IAuditService {
         for (EventInfoDto event : events) {
             if (event.getName() != null && !event.getName().isEmpty()) {
                 String name = event.getName().trim();
-                String message = "Réponds uniquement par 1 ou 0 sans explication. Est-ce que l'expression \"" + name + "\" est au passé? Réponds 1 pour oui, 0 pour non.";
+                String message = promptConfiguration.getPastTenseExpressionPrompt(name);
                 String response = this.chatModel.call(message);
                 if (response == null || response.isEmpty()) {
                     logStage2("Aucune réponse reçue pour l'événement: " + name);
@@ -317,7 +319,7 @@ public class AuditService implements IAuditService {
         for (ActivityInfoDto activity : activities) {
             if (activity.getName() != null && !activity.getName().isEmpty()) {
                 String name = activity.getName().trim();
-                String message = "Réponds uniquement par 1 ou 0 sans explication. Est-ce que l'expression \"" + name + "\" contient une abréviation? Réponds 1 pour oui, 0 pour non.";
+                String message = promptConfiguration.getAbbreviationSimplePrompt(name);
                 String response = this.chatModel.call(message);
                 if (response == null || response.isEmpty()) {
                     logStage3("Aucune réponse reçue pour l'activité: " + name);
@@ -332,7 +334,7 @@ public class AuditService implements IAuditService {
         for (EventInfoDto event : events) {
             if (event.getName() != null && !event.getName().isEmpty()) {
                 String name = event.getName().trim();
-                String message = "Réponds uniquement par 1 ou 0 sans explication. Est-ce que l'expression \"" + name + "\" contient une abréviation? Réponds 1 pour oui, 0 pour non.";
+                String message = promptConfiguration.getAbbreviationSimplePrompt(name);
                 String response = this.chatModel.call(message);
                 if (response == null || response.isEmpty()) {
                     logStage3("Aucune réponse reçue pour l'événement: " + name);
