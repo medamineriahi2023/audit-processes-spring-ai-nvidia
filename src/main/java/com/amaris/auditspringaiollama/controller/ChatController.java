@@ -1,150 +1,54 @@
 package com.amaris.auditspringaiollama.controller;
 
-import com.amaris.auditspringaiollama.service.AuditService;
+import com.amaris.auditspringaiollama.service.IAuditService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
+@RequestMapping("/audit")
 @RequiredArgsConstructor
 public class ChatController {
 
-    private final AuditService auditService;
+    private final IAuditService auditService;
 
+    @GetMapping(value = "/check/verb/infinitive/{fileName}")
+    public ResponseEntity<?> checkVerbInfinitive(@PathVariable String fileName) throws IOException {
+        var result = auditService.checkActivitiesIsVerbInfinitiveUsingAIFromFile(fileName);
+        return ResponseEntity.ok(result);
+    }
 
+    @GetMapping(value = "/check/events/past/{fileName}")
+    public ResponseEntity<?> checkEventsInPastForm(@PathVariable String fileName) throws IOException {
+        var result = auditService.checkEventsAreInThePastFormFromFile(fileName);
+        return ResponseEntity.ok(result);
+    }
 
-    @PostMapping(value = "/upload/check/verb/infinitive", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> checkVerbInfinitive(@RequestParam("file") MultipartFile file) throws IOException {
-        if (file.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body("Le fichier ne peut pas être vide");
-        }
+    @GetMapping(value = "/detect/abbreviations/{fileName}")
+    public ResponseEntity<?> detectAbbreviations(@PathVariable String fileName) throws IOException {
+        var result = auditService.detectAbbreviationsFromFile(fileName);
+        return ResponseEntity.ok(result);
+    }
 
-        String filename = file.getOriginalFilename();
-        if (filename == null || !filename.toLowerCase().endsWith(".bpmn")) {
-            return ResponseEntity.badRequest()
-                    .body("Le fichier doit avoir l'extension .bpmn");
-        }
+    @GetMapping(value = "/check/start-events/{fileName}")
+    public ResponseEntity<?> checkStartEvents(@PathVariable String fileName) throws IOException {
+        var result = auditService.checkTheNumberOfStartEventsFromFile(fileName);
+        return ResponseEntity.ok(result);
+    }
 
-        var result = auditService.checkActivitiesIsVerbInfinitiveUsingAI(file);
+    @GetMapping(value = "/check/end-events/{fileName}")
+    public ResponseEntity<?> checkEndEvents(@PathVariable String fileName) throws IOException {
+        var result = auditService.checkTheNumberOfEndEventsFromFile(fileName);
         return ResponseEntity.ok(result);
     }
 
     @GetMapping(value = "/health")
-    public ResponseEntity<?> health() throws IOException {
-
-        return ResponseEntity.ok("healthy");
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("OK");
     }
-
-    @PostMapping(value = "/check/file/valid", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> checkFileValidity(@RequestParam("file") MultipartFile file) throws IOException {
-
-        return ResponseEntity.ok(auditService.isValidBpmnFile(file));
-    }
-
-    @PostMapping(value = "/upload/check/verb/past/form", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> checkVerbInThePastForm(@RequestParam("file") MultipartFile file) throws IOException {
-        if (file.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body("Le fichier ne peut pas être vide");
-        }
-
-        String filename = file.getOriginalFilename();
-        if (filename == null || !filename.toLowerCase().endsWith(".bpmn")) {
-            return ResponseEntity.badRequest()
-                    .body("Le fichier doit avoir l'extension .bpmn");
-        }
-
-        var result = auditService.checkEventsAreInThePastForm(file);
-        return ResponseEntity.ok(result);
-    }
-
-    @PostMapping(value = "/upload/detect/abbreviations", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> detectAbbreviations(@RequestParam("file") MultipartFile file) throws IOException {
-        if (file.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body("Le fichier ne peut pas être vide");
-        }
-
-        String filename = file.getOriginalFilename();
-        if (filename == null || !filename.toLowerCase().endsWith(".bpmn")) {
-            return ResponseEntity.badRequest()
-                    .body("Le fichier doit avoir l'extension .bpmn");
-        }
-
-        var result = auditService.detectAbbreviations(file);
-        return ResponseEntity.ok(result);
-    }
-
-
-    @PostMapping(value = "/upload/check/number/end/events", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> checkNumberEndEvents(@RequestParam("file") MultipartFile file) throws IOException {
-        if (file.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body("Le fichier ne peut pas être vide");
-        }
-
-        String filename = file.getOriginalFilename();
-        if (filename == null || !filename.toLowerCase().endsWith(".bpmn")) {
-            return ResponseEntity.badRequest()
-                    .body("Le fichier doit avoir l'extension .bpmn");
-        }
-
-        var result = auditService.checkTheNumberOfEndEvents(file);
-        return ResponseEntity.ok(result);
-    }
-
-
-    @PostMapping(value = "/upload/check/number/start/events", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> checkNumberStartEvents(@RequestParam("file") MultipartFile file) throws IOException {
-        if (file.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body("Le fichier ne peut pas être vide");
-        }
-
-        String filename = file.getOriginalFilename();
-        if (filename == null || !filename.toLowerCase().endsWith(".bpmn")) {
-            return ResponseEntity.badRequest()
-                    .body("Le fichier doit avoir l'extension .bpmn");
-        }
-
-        var result = auditService.checkTheNumberOfStartEvents(file);
-        return ResponseEntity.ok(result);
-    }
-
-
-    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> auditBpmnFile(@RequestParam("file") MultipartFile file) throws IOException {
-        if (file.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body("Le fichier ne peut pas être vide");
-        }
-
-        String filename = file.getOriginalFilename();
-        if (filename == null || !filename.toLowerCase().endsWith(".bpmn")) {
-            return ResponseEntity.badRequest()
-                    .body("Le fichier doit avoir l'extension .bpmn");
-        }
-
-        // partie AI
-       var result = auditService.checkActivitiesIsVerbInfinitiveUsingAI(file);
-       var result2 = auditService.checkEventsAreInThePastForm(file);
-       auditService.detectAbbreviations(file);
-
-       // partie code natif
-       auditService.checkTheNumberOfStartEvents(file);
-       auditService.checkTheNumberOfEndEvents(file);
-        return ResponseEntity.ok(result);
-    }
-
-
-
-
 }

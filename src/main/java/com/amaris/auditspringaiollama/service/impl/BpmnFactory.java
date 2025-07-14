@@ -1,8 +1,9 @@
-package com.amaris.auditspringaiollama.service;
+package com.amaris.auditspringaiollama.service.impl;
 
-import com.amaris.auditspringaiollama.models.ActivityInfo;
-import com.amaris.auditspringaiollama.models.EventInfo;
-import com.amaris.auditspringaiollama.models.GatewayInfo;
+import com.amaris.auditspringaiollama.models.ActivityInfoDto;
+import com.amaris.auditspringaiollama.models.EventInfoDto;
+import com.amaris.auditspringaiollama.models.GatewayInfoDto;
+import com.amaris.auditspringaiollama.service.IbpmnFactory;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.camunda.bpm.model.bpmn.instance.Event;
 import org.camunda.bpm.model.bpmn.instance.Gateway;
@@ -13,32 +14,32 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class BpmnFactory {
+public class BpmnFactory implements IbpmnFactory {
 
-    public List<ActivityInfo> extractActivities(BpmnModelInstance modelInstance) {
+    public List<ActivityInfoDto> extractActivities(BpmnModelInstance modelInstance) {
         return modelInstance.getModelElementsByType(Task.class)
                 .stream()
-                .map(task -> new ActivityInfo(
+                .map(task -> new ActivityInfoDto(
                         task.getId(),
                         task.getName() != null ? task.getName() : "Tâche sans nom"
                 ))
                 .collect(Collectors.toList());
     }
 
-    public List<EventInfo> extractEvents(BpmnModelInstance modelInstance) {
+    public List<EventInfoDto> extractEvents(BpmnModelInstance modelInstance) {
         return modelInstance.getModelElementsByType(Event.class)
                 .stream()
-                .map(event -> new EventInfo(
+                .map(event -> new EventInfoDto(
                         event.getId(),
                         event.getName() != null ? event.getName() : "Événement sans nom"
                         ,event.getElementType().getTypeName()))
                 .collect(Collectors.toList());
     }
 
-    public List<GatewayInfo> extractGateways(BpmnModelInstance modelInstance) {
+    public List<GatewayInfoDto> extractGateways(BpmnModelInstance modelInstance) {
         return modelInstance.getModelElementsByType(Gateway.class)
                 .stream()
-                .map(gateway -> new GatewayInfo(
+                .map(gateway -> new GatewayInfoDto(
                         gateway.getId(),
                         gateway.getName() != null ? gateway.getName() : "Passerelle sans nom"
                 ))

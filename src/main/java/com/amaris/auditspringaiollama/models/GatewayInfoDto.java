@@ -7,9 +7,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
-public class EventInfo {
+public class GatewayInfoDto {
     private final String id;
     private final String name;
-    private final String type;
-
 }

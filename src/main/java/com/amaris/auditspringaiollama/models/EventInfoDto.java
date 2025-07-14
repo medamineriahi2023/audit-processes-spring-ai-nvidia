@@ -2,12 +2,14 @@ package com.amaris.auditspringaiollama.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.ToString;
+import lombok.Setter;
 
-@ToString
 @AllArgsConstructor
 @Getter
-public class ActivityInfo {
+@Setter
+public class EventInfoDto {
     private final String id;
     private final String name;
+    private final String type;
+
 }
