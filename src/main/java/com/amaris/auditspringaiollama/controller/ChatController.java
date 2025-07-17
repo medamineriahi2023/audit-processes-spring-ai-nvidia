@@ -1,14 +1,15 @@
 package com.amaris.auditspringaiollama.controller;
 
 import com.amaris.auditspringaiollama.service.IAuditService;
+import com.amaris.auditspringaiollama.service.NlpService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
-import java.util.List;
 
 @RestController
 @RequestMapping("/audit")
@@ -16,6 +17,7 @@ import java.util.List;
 public class ChatController {
 
     private final IAuditService auditService;
+    private final NlpService nlpService;
 
     @GetMapping(value = "/check/verb/infinitive/{fileName}")
     public ResponseEntity<?> checkVerbInfinitive(@PathVariable String fileName) throws IOException {
@@ -50,5 +52,10 @@ public class ChatController {
     @GetMapping(value = "/health")
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("OK");
+    }
+
+    @GetMapping(value = "/test/nlp")
+    public void test() {
+         nlpService.test();
     }
 }
