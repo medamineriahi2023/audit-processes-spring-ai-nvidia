@@ -1,0 +1,50 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  application:
+    name: audit-spring-ai-ollama
+
+  ai:
+    # ollama:
+    #   base-url: http://localhost:11434
+    #   chat:
+    #     options:
+    #       model: qwen2.5:7b
+
+    openai:
+      api-key: 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
+      base-url: https://integrate.api.nvidia.com
+      chat:
+        options:
+          model: nvidia/llama-3.1-nemotron-70b-instruct
+          max-tokens: 2048
+
+camunda:
+  client:
+    mode: saas
+    auth:
+      client-id: Gg_n9~.15tbKx55Z4tkIhncn-2AvC5_~
+      client-secret: _W.3b1JIV6zv2tB6xUGjJlt.dcuOX6zo86Fc.x4vz4-BY1bq4~U-2AUQiHWmsWfo
+    cloud:
+      cluster-id: 8891cb97-766d-4ed5-99f6-dcde2478929e
+      region: lhr-1
+    zeebe:
+      gateway-address: 8891cb97-766d-4ed5-99f6-dcde2478929e.lhr-1.zeebe.camunda.io:443
+      grpc-address: grpcs://8891cb97-766d-4ed5-99f6-dcde2478929e.lhr-1.zeebe.camunda.io:443
+      rest-address: https://lhr-1.zeebe.camunda.io/8891cb97-766d-4ed5-99f6-dcde2478929e
+      client-id: Gg_n9~.15tbKx55Z4tkIhncn-2AvC5_~
+      client-secret: _W.3b1JIV6zv2tB6xUGjJlt.dcuOX6zo86Fc.x4vz4-BY1bq4~U-2AUQiHWmsWfo
+      audience: zeebe.camunda.io
+      auth-server: https://login.cloud.camunda.io/oauth/token
+    operate:
+      url: https://lhr-1.operate.camunda.io/8891cb97-766d-4ed5-99f6-dcde2478929e
+      client-id: Gg_n9~.15tbKx55Z4tkIhncn-2AvC5_~
+      client-secret: _W.3b1JIV6zv2tB6xUGjJlt.dcuOX6zo86Fc.x4vz4-BY1bq4~U-2AUQiHWmsWfo
+      audience: operate.camunda.io
+      auth-server: https://login.cloud.camunda.io/oauth/token
+    tasklist:
+      url: https://lhr-1.tasklist.camunda.io/8891cb97-766d-4ed5-99f6-dcde2478929e
+      client-id: Gg_n9~.15tbKx55Z4tkIhncn-2AvC5_~
+      client-secret: _W.3b1JIV6zv2tB6xUGjJlt.dcuOX6zo86Fc.x4vz4-BY1bq4~U-2AUQiHWmsWfo
+      audience: tasklist.camunda.io
+      auth-server: https://login.cloud.camunda.io/oauth/token
