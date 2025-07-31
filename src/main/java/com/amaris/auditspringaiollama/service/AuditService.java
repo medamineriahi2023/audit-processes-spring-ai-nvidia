@@ -495,7 +495,6 @@ public class AuditService {
             List<String> erreurs = new ArrayList<>();
             boolean isValid = true;
 
-            // Validation selon le type de symbole
             switch (request.getTypeSymbol().toLowerCase()) {
                 case "task":
                 case "activity":
@@ -510,7 +509,6 @@ public class AuditService {
                     break;
 
                 case "event":
-                    // Vérifier si c'est au passé
                     String[] words = request.getNomSymbol().trim().split(" ");
                     String lastWord = words[words.length - 1];
                     String eventMessage = "Réponds uniquement par 1 ou 0 sans explication. Est-ce que le mot \"" + lastWord + "\" est (un verbe dans le passé) ? Réponds 1 pour oui, 0 pour non.";

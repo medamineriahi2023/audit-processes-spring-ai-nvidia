@@ -4,6 +4,14 @@ spring:
   application:
     name: audit-spring-ai-ollama
 
+  kafka:
+    bootstrap-servers: 4.233.144.16:9092
+    consumer:
+      group-id: audit-consumer-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
   ai:
     # ollama:
     #   base-url: http://localhost:11434
